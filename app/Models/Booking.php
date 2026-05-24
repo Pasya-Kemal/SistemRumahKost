@@ -45,7 +45,7 @@ class Booking extends Model
     /**
      * Rela: Booking-record_payment (one to many)
      */
-    public futionnction payments()
+    public function payments()
     {
         return $this->hasMany(Payment::class, 'booking_id', 'id');
     }

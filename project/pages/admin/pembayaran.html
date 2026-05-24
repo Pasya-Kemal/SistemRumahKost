@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>KostNest — Pembayaran</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet"/>
+  <link href="../../assets/css/global.css" rel="stylesheet"/>
+  <style>
+    .modal-overlay {
+      display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:2000;
+      align-items:center;justify-content:center;
+    }
+    .modal-overlay.show { display:flex; }
+    .modal-box {
+      background:var(--clr-surface);border-radius:var(--radius);
+      width:100%;max-width:500px;padding:32px;position:relative;
+      box-shadow:var(--shadow-lg);animation:fadeUp .25s ease;
+    }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+    .modal-title { font-family:var(--font-display);font-size:22px;margin-bottom:20px; }
+    .modal-close { position:absolute;top:16px;right:16px;background:none;border:none;font-size:18px;color:var(--clr-muted);cursor:pointer; }
+    .form-group-custom { margin-bottom:16px; }
+    .form-label-custom { display:block;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--clr-muted);margin-bottom:6px; }
+    .form-input-custom {
+      width:100%;padding:10px 14px;border:1.5px solid var(--clr-border);border-radius:var(--radius-sm);
+      background:var(--clr-bg);font-size:14px;font-family:var(--font-body);color:var(--clr-text);outline:none;transition:border .2s;
+    }
+    .form-input-custom:focus { border-color:var(--clr-primary); }
+    /* Kwitansi modal */
+    .receipt-box { background:var(--clr-bg);border-radius:var(--radius-sm);padding:20px;margin-bottom:20px; }
+    .receipt-row { display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px dashed var(--clr-border);font-size:13px; }
+    .receipt-row:last-child { border-bottom:none;font-weight:700;font-size:15px;margin-top:4px; }
+    .receipt-row .lbl { color:var(--clr-muted); }
+  </style>
+</head>
+<body>
+<script src="../../assets/js/layout.js"></script>
+<script>buildLayout({ pageId:'pembayaran', pageTitle:'Pembayaran' });</script>
+
+<main class="main-wrap">
+  <div class="content-area">
+
+    <div class="page-header">
+      <div class="page-header-left">
+        <div class="page-title">Manajemen Pembayaran</div>
+        <div class="page-subtitle">Lacak dan kelola semua transaksi pembayaran</div>
+      </div>
+      <div class="d-flex gap-2">
+        <button class="btn-outline-custom"><i class="fa-solid fa-file-export"></i> Export</button>
+        <button class="btn-primary-custom" onclick="openModal()"><i class="fa-solid fa-plus"></i> Catat Pembayaran</button>
+      </div>
+    </div>
+
+    <!-- STAT CARDS -->
+    <div class="row g-3 mb-4">
+      <div class="col-md-4">
+        <div class="stat-card green">
+          <div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
+          <div class="stat-value">16</div>
+          <div class="stat-label">Sudah Bayar Bulan Ini</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="stat-card red">
+          <div class="stat-icon red"><i class="fa-solid fa-clock-rotate-left"></i></div>
+          <div class="stat-value">3</div>
+          <div class="stat-label">Belum / Terlambat Bayar</div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="stat-card gold">
+          <div class="stat-icon gold"><i class="fa-solid fa-coins"></i></div>
+          <div class="stat-value">Rp 28,4jt</div>
+          <div class="stat-label">Total Diterima Bulan Ini</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ALERT -->
+    <div class="alert-custom alert-danger-custom mb-4">
+      <span class="alert-icon"><i class="fa-solid fa-circle-exclamation" style="color:var(--clr-danger)"></i></span>
+      <div><strong>3 penghuni</strong> melewati tanggal jatuh tempo pembayaran. Segera kirim pengingat atau tindak lanjut.</div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="card-custom">
+      <div class="card-header-custom mb-3">
+        <div class="card-title-custom">Riwayat Transaksi</div>
+        <div class="d-flex gap-2">
+          <select class="filter-select"><option>Mei 2025</option><option>April 2025</option></select>
+          <select class="filter-select"><option>Semua Status</option><option>Lunas</option><option>Belum Bayar</option></select>
+        </div>
+      </div>
+      <div class="card-body-custom" style="padding-top:0;padding-bottom:0">
+        <div style="overflow-x:auto">
+          <table class="table-custom">
+            <thead>
+              <tr>
+                <th style="padding-left:0">#</th>
+                <th>Penghuni</th>
+                <th>Kamar</th>
+                <th>Periode</th>
+                <th>Nominal</th>
+                <th>Metode</th>
+                <th>Tanggal Bayar</th>
+                <th>Status</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="color:var(--clr-muted);padding-left:0;font-size:12px">TRX-001</td>
+                <td style="font-weight:600">Rizky Maulana</td>
+                <td>12B</td>
+                <td style="color:var(--clr-muted);font-size:13px">Mei 2025</td>
+                <td style="font-weight:700;color:var(--clr-primary)">Rp 1.800.000</td>
+                <td><span class="badge-custom badge-info">Transfer</span></td>
+                <td style="color:var(--clr-muted);font-size:13px">1 Mei 2025</td>
+                <td><span class="badge-custom badge-success">Lunas</span></td>
+                <td><button class="action-btn view" onclick="openReceipt('Rizky Maulana','12B','Rp 1.800.000','1 Mei 2025','Transfer')"><i class="fa-solid fa-receipt"></i></button></td>
+              </tr>
+              <tr>
+                <td style="color:var(--clr-muted);padding-left:0;font-size:12px">TRX-002</td>
+                <td style="font-weight:600">Siti Rahayu</td>
+                <td>08A</td>
+                <td style="color:var(--clr-muted);font-size:13px">Mei 2025</td>
+                <td style="font-weight:700;color:var(--clr-primary)">Rp 1.200.000</td>
+                <td><span class="badge-custom badge-success">Tunai</span></td>
+                <td style="color:var(--clr-muted);font-size:13px">3 Mei 2025</td>
+                <td><span class="badge-custom badge-success">Lunas</span></td>
+                <td><button class="action-btn view" onclick="openReceipt('Siti Rahayu','08A','Rp 1.200.000','3 Mei 2025','Tunai')"><i class="fa-solid fa-receipt"></i></button></td>
+              </tr>
+              <tr>
+                <td style="color:var(--clr-muted);padding-left:0;font-size:12px">TRX-003</td>
+                <td style="font-weight:600">Dian Anggraini</td>
+                <td>15C</td>
+                <td style="color:var(--clr-muted);font-size:13px">Mei 2025</td>
+                <td style="font-weight:700;color:var(--clr-danger)">Rp 2.500.000</td>
+                <td><span class="badge-custom badge-muted">—</span></td>
+                <td style="color:var(--clr-muted);font-size:13px">—</td>
+                <td><span class="badge-custom badge-danger">Belum Bayar</span></td>
+                <td><button class="action-btn edit" title="Kirim Pengingat"><i class="fa-solid fa-paper-plane"></i></button></td>
+              </tr>
+              <tr>
+                <td style="color:var(--clr-muted);padding-left:0;font-size:12px">TRX-004</td>
+                <td style="font-weight:600">Fajar Hidayat</td>
+                <td>03A</td>
+                <td style="color:var(--clr-muted);font-size:13px">Mei 2025</td>
+                <td style="font-weight:700;color:var(--clr-accent)">Rp 600.000 <span style="font-size:11px;font-weight:400;color:var(--clr-muted)">(DP)</span></td>
+                <td><span class="badge-custom badge-info">Transfer</span></td>
+                <td style="color:var(--clr-muted);font-size:13px">2 Mei 2025</td>
+                <td><span class="badge-custom badge-warning">Sebagian</span></td>
+                <td><button class="action-btn view" onclick="openReceipt('Fajar Hidayat','03A','Rp 600.000','2 Mei 2025','Transfer')"><i class="fa-solid fa-receipt"></i></button></td>
+              </tr>
+              <tr>
+                <td style="color:var(--clr-muted);padding-left:0;font-size:12px">TRX-005</td>
+                <td style="font-weight:600">Nadia Putri</td>
+                <td>09B</td>
+                <td style="color:var(--clr-muted);font-size:13px">Mei 2025</td>
+                <td style="font-weight:700;color:var(--clr-primary)">Rp 1.800.000</td>
+                <td><span class="badge-custom badge-info">Transfer</span></td>
+                <td style="color:var(--clr-muted);font-size:13px">1 Mei 2025</td>
+                <td><span class="badge-custom badge-success">Lunas</span></td>
+                <td><button class="action-btn view" onclick="openReceipt('Nadia Putri','09B','Rp 1.800.000','1 Mei 2025','Transfer')"><i class="fa-solid fa-receipt"></i></button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="d-flex align-items-center justify-content-between" style="padding:16px 24px;border-top:1px solid var(--clr-border)">
+        <div style="font-size:13px;color:var(--clr-muted)">Menampilkan 5 dari 19 transaksi</div>
+        <div class="d-flex gap-1">
+          <button class="action-btn view"><i class="fa-solid fa-chevron-left"></i></button>
+          <button style="width:30px;height:30px;border-radius:6px;border:none;background:var(--clr-primary);color:#fff;font-size:13px;font-weight:700;cursor:pointer">1</button>
+          <button class="action-btn view" style="background:transparent;color:var(--clr-muted)">2</button>
+          <button class="action-btn view"><i class="fa-solid fa-chevron-right"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- MODAL CATAT PEMBAYARAN -->
+<div class="modal-overlay" id="bayarModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('bayarModal')"><i class="fa-solid fa-xmark"></i></button>
+    <div class="modal-title">Catat Pembayaran</div>
+    <div class="row g-3">
+      <div class="col-12">
+        <div class="form-group-custom">
+          <label class="form-label-custom">Penghuni</label>
+          <select class="form-input-custom">
+            <option>Rizky Maulana — Kamar 12B</option>
+            <option>Siti Rahayu — Kamar 08A</option>
+            <option>Dian Anggraini — Kamar 15C</option>
+            <option>Fajar Hidayat — Kamar 03A</option>
+          </select>
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="form-group-custom">
+          <label class="form-label-custom">Periode Bayar</label>
+          <select class="form-input-custom">
+            <option>Mei 2025</option><option>Juni 2025</option>
+          </select>
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="form-group-custom">
+          <label class="form-label-custom">Nominal (Rp)</label>
+          <input class="form-input-custom" type="number" placeholder="1200000">
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="form-group-custom">
+          <label class="form-label-custom">Metode Bayar</label>
+          <select class="form-input-custom">
+            <option>Tunai</option><option>Transfer Bank</option><option>QRIS</option><option>E-Wallet</option>
+          </select>
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="form-group-custom">
+          <label class="form-label-custom">Tanggal Bayar</label>
+          <input class="form-input-custom" type="date">
+        </div>
+      </div>
+      <div class="col-12">
+        <div class="form-group-custom">
+          <label class="form-label-custom">Catatan</label>
+          <textarea class="form-input-custom" rows="2" placeholder="Keterangan tambahan..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="d-flex gap-2 mt-2">
+      <button class="btn-outline-custom flex-fill" onclick="closeModal('bayarModal')">Batal</button>
+      <button class="btn-primary-custom flex-fill" onclick="closeModal('bayarModal')"><i class="fa-solid fa-save"></i> Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL KWITANSI -->
+<div class="modal-overlay" id="receiptModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('receiptModal')"><i class="fa-solid fa-xmark"></i></button>
+    <div class="modal-title">Kwitansi Pembayaran</div>
+    <div class="receipt-box">
+      <div style="text-align:center;margin-bottom:16px">
+        <div style="font-family:var(--font-display);font-size:22px">KostNest</div>
+        <div style="font-size:11px;color:var(--clr-muted)">Jl. Merdeka No. 10, Bandung</div>
+      </div>
+      <div class="receipt-row"><span class="lbl">Nama Penghuni</span><span id="rcpt-nama">—</span></div>
+      <div class="receipt-row"><span class="lbl">Kamar</span><span id="rcpt-kamar">—</span></div>
+      <div class="receipt-row"><span class="lbl">Periode</span><span>Mei 2025</span></div>
+      <div class="receipt-row"><span class="lbl">Tanggal Bayar</span><span id="rcpt-tgl">—</span></div>
+      <div class="receipt-row"><span class="lbl">Metode</span><span id="rcpt-metode">—</span></div>
+      <div class="receipt-row"><span class="lbl">Total Bayar</span><span id="rcpt-nominal" style="color:var(--clr-primary)">—</span></div>
+    </div>
+    <div class="d-flex gap-2">
+      <button class="btn-outline-custom flex-fill" onclick="closeModal('receiptModal')"><i class="fa-solid fa-print"></i> Cetak</button>
+      <button class="btn-primary-custom flex-fill" onclick="closeModal('receiptModal')"><i class="fa-solid fa-download"></i> Download</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  function openModal() { document.getElementById('bayarModal').classList.add('show'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+  function openReceipt(nama, kamar, nominal, tgl, metode) {
+    document.getElementById('rcpt-nama').textContent = nama;
+    document.getElementById('rcpt-kamar').textContent = kamar;
+    document.getElementById('rcpt-nominal').textContent = nominal;
+    document.getElementById('rcpt-tgl').textContent = tgl;
+    document.getElementById('rcpt-metode').textContent = metode;
+    document.getElementById('receiptModal').classList.add('show');
+  }
+  ['bayarModal','receiptModal'].forEach(id => {
+    document.getElementById(id).addEventListener('click', function(e){ if(e.target===this) closeModal(id); });
+  });
+</script>
+</body>
+</html>

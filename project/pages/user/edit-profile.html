@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Edit Profile — KostNest</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet"/>
+  <link href="../../assets/css/global.css" rel="stylesheet"/>
+
+  <style>
+
+    .profile-card{
+      max-width:900px;
+      margin:auto;
+      overflow:hidden;
+    }
+
+    .profile-banner{
+      height:180px;
+      background:
+        linear-gradient(rgba(26,40,32,.55), rgba(26,40,32,.55)),
+        url('https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=1200&q=80');
+      background-size:cover;
+      background-position:center;
+      border-radius:var(--radius) var(--radius) 0 0;
+      position:relative;
+    }
+
+    .profile-avatar-wrap{
+      position:relative;
+      margin-top:-60px;
+      text-align:center;
+      z-index:10;
+    }
+
+    .profile-avatar{
+      width:120px;
+      height:120px;
+      border-radius:50%;
+      border:5px solid var(--clr-surface);
+      background:linear-gradient(135deg,var(--clr-primary),var(--clr-primary-light));
+      color:#fff;
+      font-size:38px;
+      font-weight:700;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      margin:auto;
+      box-shadow:0 12px 32px rgba(44,74,62,.25);
+    }
+
+    .profile-name{
+      margin-top:16px;
+      font-family:var(--font-display);
+      font-size:30px;
+      color:var(--clr-text);
+    }
+
+    .profile-role{
+      font-size:14px;
+      color:var(--clr-muted);
+      margin-top:4px;
+    }
+
+    .profile-section{
+      padding:36px;
+    }
+
+    .form-card{
+      background:var(--clr-bg);
+      border:1.5px solid var(--clr-border);
+      border-radius:18px;
+      padding:24px;
+      margin-top:28px;
+    }
+
+    .section-title{
+      font-size:12px;
+      font-weight:700;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      color:var(--clr-muted);
+      margin-bottom:20px;
+    }
+
+    .form-input-custom{
+      width:100%;
+      padding:12px 14px;
+      border:1.5px solid var(--clr-border);
+      border-radius:12px;
+      background:#fff;
+      font-size:14px;
+      color:var(--clr-text);
+      outline:none;
+      transition:.2s;
+    }
+
+    .form-input-custom:focus{
+      border-color:var(--clr-primary);
+      box-shadow:0 0 0 4px rgba(44,74,62,.08);
+    }
+
+    .form-label-custom{
+      display:block;
+      margin-bottom:8px;
+      font-size:12px;
+      font-weight:700;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      color:var(--clr-muted);
+    }
+
+    .profile-actions{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-top:30px;
+    }
+
+    .btn-outline-custom,
+    .btn-primary-custom{
+      min-width:180px;
+      justify-content:center;
+    }
+
+    @media(max-width:768px){
+
+      .profile-section{
+        padding:22px;
+      }
+
+      .profile-avatar{
+        width:100px;
+        height:100px;
+        font-size:32px;
+      }
+
+      .profile-name{
+        font-size:24px;
+      }
+
+      .profile-actions{
+        flex-direction:column;
+      }
+
+      .btn-outline-custom,
+      .btn-primary-custom{
+        width:100%;
+      }
+    }
+
+  </style>
+</head>
+
+<body>
+
+<script src="../../assets/js/layout.js"></script>
+
+<script>
+  buildLayout({
+    pageId:'pengaturan',
+    pageTitle:'Edit Profile'
+  });
+</script>
+
+<main class="main-wrap">
+  <div class="content-area">
+
+    <div class="page-header">
+      <div class="page-header-left">
+        <div class="page-title">Edit Profile</div>
+        <div class="page-subtitle">
+          Kelola informasi profil akun Anda
+        </div>
+      </div>
+    </div>
+
+    <div class="card-custom profile-card">
+
+      <!-- Banner -->
+      <div class="profile-banner"></div>
+
+      <!-- Avatar -->
+      <div class="profile-avatar-wrap">
+
+        <div class="profile-avatar">
+          UP
+        </div>
+
+        <div class="profile-name">
+          User Penghuni
+        </div>
+
+        <div class="profile-role">
+          Penghuni KostNest
+        </div>
+
+        <button class="btn-outline-custom mt-3">
+          <i class="fa-solid fa-camera"></i>
+          Ganti Foto
+        </button>
+
+      </div>
+
+      <!-- Form -->
+      <div class="profile-section">
+
+        <div class="form-card">
+
+          <div class="section-title">
+            Informasi Profile
+          </div>
+
+          <div class="row g-3">
+
+            <div class="col-md-6">
+              <label class="form-label-custom">
+                Nama Lengkap
+              </label>
+
+              <input
+                type="text"
+                class="form-input-custom"
+                value="User Penghuni"
+              >
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label-custom">
+                Username
+              </label>
+
+              <input
+                type="text"
+                class="form-input-custom"
+                value="userkost"
+              >
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label-custom">
+                Email
+              </label>
+
+              <input
+                type="email"
+                class="form-input-custom"
+                value="user@kostnest.id"
+              >
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label-custom">
+                Nomor Telepon
+              </label>
+
+              <input
+                type="text"
+                class="form-input-custom"
+                value="081234567890"
+              >
+            </div>
+
+            <div class="col-12">
+              <label class="form-label-custom">
+                Alamat
+              </label>
+
+              <textarea
+                class="form-input-custom"
+                rows="3"
+              >Jl. Melati No. 12, Bandung</textarea>
+            </div>
+
+          </div>
+
+          <div class="profile-actions">
+
+            <button class="btn-primary-custom">
+              <i class="fa-solid fa-save"></i>
+              Simpan Perubahan
+            </button>
+
+            <a href="pengaturan.html" class="btn-outline-custom">
+              Kembali
+            </a>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+</main>
+
+</body>
+</html>

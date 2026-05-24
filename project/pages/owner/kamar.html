@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>KostNest — Kamar (Owner)</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet"/>
+  <link href="../../assets/css/global.css" rel="stylesheet"/>
+  <style>
+    /* ── ROOM CARD ── */
+    .room-card {
+      background: var(--clr-surface);
+      border: 1.5px solid var(--clr-border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: all .3s cubic-bezier(.34,1.56,.64,1);
+      cursor: pointer;
+    }
+    .room-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 16px 48px rgba(44,74,62,.16);
+      border-color: var(--clr-primary);
+    }
+    .room-img-wrap { position: relative; height: 180px; overflow: hidden; }
+    .room-img-wrap img { width: 100%; height: 100%; object-fit: cover; transition: transform .4s ease; }
+    .room-card:hover .room-img-wrap img { transform: scale(1.06); }
+    .room-img-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to bottom, transparent 50%, rgba(26,40,32,.55) 100%);
+      pointer-events: none;
+    }
+    .room-status-pill { position: absolute; top: 12px; left: 12px; }
+    .room-price-overlay {
+      position: absolute; bottom: 12px; right: 12px;
+      background: rgba(255,255,255,.92); backdrop-filter: blur(6px);
+      border-radius: 8px; padding: 4px 10px;
+      font-size: 13px; font-weight: 700; color: var(--clr-primary);
+    }
+    .room-info { padding: 16px 18px 18px; }
+    .room-number { font-family: var(--font-display); font-size: 20px; color: var(--clr-text); line-height: 1.2; margin-bottom: 2px; }
+    .room-type   { font-size: 12px; color: var(--clr-muted); margin-bottom: 12px; }
+    .room-features { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+    .room-feat-tag {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: var(--clr-bg); border: 1px solid var(--clr-border);
+      border-radius: 6px; padding: 4px 9px;
+      font-size: 11px; font-weight: 500; color: var(--clr-muted);
+    }
+    .room-feat-tag i { font-size: 10px; color: var(--clr-primary); }
+    .btn-actions { display: flex; gap: 6px; align-items: center; }
+    .btn-detail {
+      flex: 1; padding: 9px;
+      background: var(--clr-primary); color: #fff;
+      border: none; border-radius: 8px;
+      font-size: 12px; font-weight: 600; font-family: var(--font-body);
+      cursor: pointer; transition: all .2s;
+      display: flex; align-items: center; justify-content: center; gap: 5px;
+    }
+    .btn-detail:hover { background: var(--clr-primary-light); }
+    .btn-icon {
+      width: 34px; height: 34px; border: none; border-radius: 8px;
+      font-size: 13px; cursor: pointer; transition: all .2s;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .btn-icon.edit { background: rgba(212,168,83,.15); color: var(--clr-accent); }
+    .btn-icon.edit:hover { background: rgba(212,168,83,.3); }
+    .btn-icon.del  { background: rgba(220,38,38,.1);  color: #dc2626; }
+    .btn-icon.del:hover  { background: rgba(220,38,38,.2); }
+
+    /* Tambah card */
+    .add-card {
+      background: var(--clr-surface); border: 2px dashed var(--clr-border);
+      border-radius: var(--radius); min-height: 340px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all .25s;
+    }
+    .add-card:hover { border-color: var(--clr-primary); background: rgba(44,74,62,.03); }
+    .add-card-inner { text-align: center; }
+    .add-card-icon {
+      width: 56px; height: 56px; border-radius: 14px;
+      background: rgba(44,74,62,.08);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 14px; font-size: 24px; color: var(--clr-primary);
+      transition: all .25s;
+    }
+    .add-card:hover .add-card-icon { background: rgba(44,74,62,.15); transform: scale(1.08); }
+
+    /* stat summary */
+    .stat-summary { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+    .stat-pill {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--clr-surface); border: 1.5px solid var(--clr-border);
+      border-radius: 10px; padding: 10px 16px;
+      font-size: 13px; font-weight: 500;
+    }
+    .stat-pill i { color: var(--clr-primary); }
+    .stat-pill strong { font-weight: 700; }
+
+    /* ── DETAIL MODAL ── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(10,20,15,.55); backdrop-filter: blur(4px);
+      z-index: 2000; align-items: center; justify-content: center; padding: 20px;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal-box {
+      background: var(--clr-surface); border-radius: var(--radius);
+      width: 100%; max-width: 680px;
+      box-shadow: 0 24px 80px rgba(44,74,62,.25);
+      animation: fadeUp .3s cubic-bezier(.34,1.2,.64,1);
+      overflow: hidden; max-height: 90vh;
+      display: flex; flex-direction: column;
+    }
+    @keyframes fadeUp {
+      from { opacity:0; transform:translateY(24px) scale(.97) }
+      to   { opacity:1; transform:translateY(0)    scale(1)   }
+    }
+    .modal-img-wrap  { position: relative; height: 240px; flex-shrink: 0; }
+    .modal-img-wrap img { width: 100%; height: 100%; object-fit: cover; }
+    .modal-img-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to bottom, transparent 40%, rgba(26,40,32,.7) 100%);
+    }
+    .modal-img-header {
+      position: absolute; bottom: 20px; left: 24px; right: 24px;
+      display: flex; align-items: flex-end; justify-content: space-between;
+    }
+    .modal-room-name  { font-family: var(--font-display); font-size: 30px; color: #fff; line-height: 1.1; }
+    .modal-room-price {
+      background: var(--clr-accent); color: var(--clr-sidebar);
+      border-radius: 10px; padding: 6px 14px;
+      font-size: 15px; font-weight: 700; white-space: nowrap;
+    }
+    .modal-close {
+      position: absolute; top: 16px; right: 16px;
+      width: 36px; height: 36px;
+      background: rgba(255,255,255,.9); backdrop-filter: blur(6px);
+      border: none; border-radius: 50%;
+      font-size: 16px; color: var(--clr-text);
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all .2s; z-index: 10;
+    }
+    .modal-close:hover { background: #fff; transform: scale(1.1); }
+    .modal-body-scroll { overflow-y: auto; padding: 24px; }
+    .modal-section-title {
+      font-size: 11px; font-weight: 700; letter-spacing: .08em;
+      text-transform: uppercase; color: var(--clr-muted); margin-bottom: 12px;
+    }
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+    .detail-item {
+      background: var(--clr-bg); border-radius: 10px; padding: 12px 14px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .detail-item-icon {
+      width: 36px; height: 36px; border-radius: 8px;
+      background: rgba(44,74,62,.1);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--clr-primary); font-size: 14px; flex-shrink: 0;
+    }
+    .detail-item-label { font-size: 11px; color: var(--clr-muted); margin-bottom: 2px; }
+    .detail-item-value { font-size: 14px; font-weight: 600; color: var(--clr-text); }
+    .fasilitas-wrap { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+    .fasilitas-tag {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: rgba(44,74,62,.08); border: 1.5px solid rgba(44,74,62,.15);
+      border-radius: 8px; padding: 7px 12px;
+      font-size: 13px; font-weight: 500; color: var(--clr-primary);
+    }
+    .modal-desc { font-size: 14px; color: var(--clr-muted); line-height: 1.75; margin-bottom: 20px; }
+    .thumb-strip { display: flex; gap: 8px; margin-bottom: 20px; overflow-x: auto; }
+    .thumb-strip img {
+      width: 80px; height: 56px; object-fit: cover;
+      border-radius: 8px; border: 2px solid transparent;
+      cursor: pointer; transition: border-color .2s; flex-shrink: 0;
+    }
+    .thumb-strip img.active { border-color: var(--clr-primary); }
+    .thumb-strip img:hover  { border-color: var(--clr-primary-light); }
+
+    /* Owner action buttons in modal */
+    .modal-owner-actions { display: flex; gap: 10px; }
+    .btn-modal-edit {
+      flex: 1; padding: 12px; border: 2px solid var(--clr-primary);
+      background: transparent; color: var(--clr-primary);
+      border-radius: 10px; font-size: 14px; font-weight: 600;
+      font-family: var(--font-body); cursor: pointer; transition: all .2s;
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+    }
+    .btn-modal-edit:hover { background: rgba(44,74,62,.07); }
+    .btn-modal-del {
+      flex: 1; padding: 12px; border: 2px solid #dc2626;
+      background: transparent; color: #dc2626;
+      border-radius: 10px; font-size: 14px; font-weight: 600;
+      font-family: var(--font-body); cursor: pointer; transition: all .2s;
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+    }
+    .btn-modal-del:hover { background: rgba(220,38,38,.07); }
+
+    /* ── FORM MODAL ── */
+    .form-modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(10,20,15,.55); backdrop-filter: blur(4px);
+      z-index: 2100; align-items: center; justify-content: center; padding: 20px;
+    }
+    .form-modal-overlay.show { display: flex; }
+    .form-modal-box {
+      background: var(--clr-surface); border-radius: var(--radius);
+      width: 100%; max-width: 560px;
+      box-shadow: 0 24px 80px rgba(44,74,62,.25);
+      animation: fadeUp .3s cubic-bezier(.34,1.2,.64,1);
+      max-height: 90vh; overflow-y: auto;
+      padding: 32px; position: relative;
+    }
+    .form-modal-title { font-family: var(--font-display); font-size: 22px; margin-bottom: 24px; }
+    .form-modal-close {
+      position: absolute; top: 16px; right: 16px;
+      background: none; border: none; font-size: 18px;
+      color: var(--clr-muted); cursor: pointer; transition: color .2s;
+    }
+    .form-modal-close:hover { color: var(--clr-text); }
+    .form-group-c { margin-bottom: 16px; }
+    .form-label-c {
+      display: block; font-size: 12px; font-weight: 700;
+      letter-spacing: .06em; text-transform: uppercase;
+      color: var(--clr-muted); margin-bottom: 6px;
+    }
+    .form-input-c {
+      width: 100%; padding: 10px 14px;
+      border: 1.5px solid var(--clr-border); border-radius: var(--radius-sm);
+      background: var(--clr-bg); font-size: 14px; font-family: var(--font-body);
+      color: var(--clr-text); outline: none; transition: border .2s;
+    }
+    .form-input-c:focus { border-color: var(--clr-primary); }
+    select.form-input-c { appearance: none; }
+    .check-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+    .check-item { display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; }
+    .check-item input { accent-color: var(--clr-primary); }
+  </style>
+</head>
+<body>
+<script src="../../assets/js/layout.js"></script>
+<script>buildLayout({ pageId:'kamar', pageTitle:'Kamar' });</script>
+
+<main class="main-wrap">
+  <div class="content-area">
+
+    <div class="page-header">
+      <div class="page-header-left">
+        <div class="page-title">Data Kamar</div>
+        <div class="page-subtitle">Pantau dan kelola semua unit kamar kost Anda</div>
+      </div>
+      <div class="d-flex gap-2">
+        <button class="btn-primary-custom" onclick="openFormModal()">
+          <i class="fa-solid fa-plus"></i> Tambah Kamar
+        </button>
+      </div>
+    </div>
+
+    <!-- STAT SUMMARY -->
+    <div class="stat-summary">
+      <div class="stat-pill"><i class="fa-solid fa-door-open"></i> Total <strong id="totalKamar">—</strong></div>
+      <div class="stat-pill"><i class="fa-solid fa-circle-check" style="color:var(--clr-success)"></i> Kosong <strong id="totalKosong" style="color:var(--clr-success)">—</strong></div>
+      <div class="stat-pill"><i class="fa-solid fa-user-check" style="color:var(--clr-muted)"></i> Terisi <strong id="totalTerisi">—</strong></div>
+      <div class="stat-pill"><i class="fa-solid fa-wrench" style="color:var(--clr-accent)"></i> Maintenance <strong id="totalMaint" style="color:var(--clr-accent)">—</strong></div>
+    </div>
+
+    <!-- FILTER -->
+    <div class="filter-bar">
+      <button class="filter-chip active" onclick="filterKamar('semua',this)">Semua</button>
+      <button class="filter-chip" onclick="filterKamar('terisi',this)">Terisi</button>
+      <button class="filter-chip" onclick="filterKamar('kosong',this)">Kosong</button>
+      <button class="filter-chip" onclick="filterKamar('maintenance',this)">Maintenance</button>
+      <select class="filter-select" id="filterTipe" onchange="applyFilters()">
+        <option value="">Semua Tipe</option>
+        <option value="Standar">Standar</option>
+        <option value="Deluxe">Deluxe</option>
+        <option value="Premium">Premium</option>
+      </select>
+      <select class="filter-select" id="filterLantai" onchange="applyFilters()">
+        <option value="">Semua Lantai</option>
+        <option value="1">Lantai 1</option>
+        <option value="2">Lantai 2</option>
+      </select>
+    </div>
+
+    <div class="row g-3" id="kamarGrid"></div>
+
+  </div>
+</main>
+
+<!-- ── DETAIL MODAL ── -->
+<div class="modal-overlay" id="detailModal" onclick="handleOverlayClick(event)">
+  <div class="modal-box">
+    <div class="modal-img-wrap">
+      <img id="modalMainImg" src="" alt="Foto Kamar"/>
+      <div class="modal-img-overlay"></div>
+      <div class="modal-img-header">
+        <div>
+          <div id="modalName" class="modal-room-name"></div>
+          <div id="modalType" style="font-size:13px;color:rgba(255,255,255,.75);margin-top:2px"></div>
+        </div>
+        <div id="modalPrice" class="modal-room-price"></div>
+      </div>
+      <button class="modal-close" onclick="closeDetail()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body-scroll">
+      <div class="thumb-strip" id="thumbStrip"></div>
+      <div class="modal-section-title">Informasi Kamar</div>
+      <div class="detail-grid">
+        <div class="detail-item">
+          <div class="detail-item-icon"><i class="fa-solid fa-layer-group"></i></div>
+          <div><div class="detail-item-label">Lantai</div><div class="detail-item-value" id="modalLantai">—</div></div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-item-icon"><i class="fa-solid fa-ruler-combined"></i></div>
+          <div><div class="detail-item-label">Luas</div><div class="detail-item-value" id="modalLuas">—</div></div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-item-icon" style="background:rgba(39,174,96,.1);color:var(--clr-success)"><i class="fa-solid fa-circle-check"></i></div>
+          <div><div class="detail-item-label">Status</div><div class="detail-item-value" id="modalStatus">—</div></div>
+        </div>
+        <div class="detail-item">
+          <div class="detail-item-icon" style="background:rgba(212,168,83,.15);color:var(--clr-accent)"><i class="fa-solid fa-tag"></i></div>
+          <div><div class="detail-item-label">Tipe</div><div class="detail-item-value" id="modalTipe">—</div></div>
+        </div>
+      </div>
+      <div class="modal-section-title">Fasilitas</div>
+      <div class="fasilitas-wrap" id="modalFasilitas"></div>
+      <div class="modal-section-title">Deskripsi</div>
+      <div class="modal-desc" id="modalDesc"></div>
+      <div class="modal-owner-actions">
+        <button class="btn-modal-edit" onclick="editKamarFromModal()"><i class="fa-solid fa-pen"></i> Edit Kamar</button>
+        <button class="btn-modal-del"  onclick="hapusKamarFromModal()"><i class="fa-solid fa-trash"></i> Hapus Kamar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── FORM MODAL ── -->
+<div class="form-modal-overlay" id="formModal" onclick="handleFormOverlay(event)">
+  <div class="form-modal-box">
+    <button class="form-modal-close" onclick="closeFormModal()"><i class="fa-solid fa-xmark"></i></button>
+    <div class="form-modal-title" id="formModalTitle">Tambah Kamar Baru</div>
+    <input type="hidden" id="formEditId" value="">
+    <div class="row g-3">
+      <div class="col-6">
+        <div class="form-group-c">
+          <label class="form-label-c">Nomor Kamar</label>
+          <input class="form-input-c" id="fNomor" type="text" placeholder="mis. 07A">
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="form-group-c">
+          <label class="form-label-c">Lantai</label>
+          <select class="form-input-c" id="fLantai">
+            <option value="1">Lantai 1</option>
+            <option value="2">Lantai 2</option>
+            <option value="3">Lantai 3</option>
+          </select>
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="form-group-c">
+          <label class="form-label-c">Tipe Kamar</label>
+          <select class="form-input-c" id="fTipe">
+            <option value="Standar">Standar</option>
+            <option value="Deluxe">Deluxe</option>
+            <option value="Premium">Premium</option>
+          </select>
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="form-group-c">
+          <label class="form-label-c">Harga / Bulan</label>
+          <input class="form-input-c" id="fHarga" type="text" placeholder="Rp 1.200.000">
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="form-group-c">
+          <label class="form-label-c">Luas</label>
+          <input class="form-input-c" id="fLuas" type="text" placeholder="3 × 4 m">
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="form-group-c">
+          <label class="form-label-c">Status</label>
+          <select class="form-input-c" id="fStatus">
+            <option value="kosong">Kosong</option>
+            <option value="terisi">Terisi</option>
+            <option value="maintenance">Maintenance</option>
+          </select>
+        </div>
+      </div>
+      <div class="col-12">
+        <label class="form-label-c">Fasilitas</label>
+        <div class="check-grid">
+          <label class="check-item"><input type="checkbox" id="fc_wifi" checked> WiFi</label>
+          <label class="check-item"><input type="checkbox" id="fc_ac" checked> AC</label>
+          <label class="check-item"><input type="checkbox" id="fc_tv"> TV</label>
+          <label class="check-item"><input type="checkbox" id="fc_km"> KM Dalam</label>
+          <label class="check-item"><input type="checkbox" id="fc_wh"> Water Heater</label>
+          <label class="check-item"><input type="checkbox" id="fc_fur"> Furnished</label>
+          <label class="check-item"><input type="checkbox" id="fc_bal"> Balkon</label>
+        </div>
+      </div>
+      <div class="col-12">
+        <div class="form-group-c">
+          <label class="form-label-c">Deskripsi</label>
+          <textarea class="form-input-c" id="fDesc" rows="3" placeholder="Deskripsi kamar..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="d-flex gap-2 mt-3">
+      <button class="btn-outline-custom flex-fill" onclick="closeFormModal()">Batal</button>
+      <button class="btn-primary-custom flex-fill" onclick="simpanKamar()">
+        <i class="fa-solid fa-save"></i> <span id="btnSimpanLabel">Simpan</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+let KAMAR_DATA = [
+  { id:1, nomor:'Kamar 01A', tipe:'Standar', lantai:1, status:'terisi',
+    harga:'Rp 1.200.000', luas:'3 × 4 m',
+    fasilitas:['WiFi','AC','KM Dalam'],
+    desc:'Kamar standar nyaman di lantai 1, cocok untuk mahasiswa atau pekerja. Dilengkapi AC baru dan koneksi WiFi fiber optik. Kamar mandi dalam dengan water heater.',
+    imgs:['https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=700&q=80','https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=700&q=80','https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=700&q=80'] },
+  { id:2, nomor:'Kamar 02B', tipe:'Deluxe', lantai:1, status:'kosong',
+    harga:'Rp 1.800.000', luas:'4 × 5 m',
+    fasilitas:['WiFi','AC','TV','KM Dalam','Water Heater'],
+    desc:'Kamar deluxe luas dengan pemandangan taman. Kasur double bed, lemari besar, dan meja kerja luas.',
+    imgs:['https://images.unsplash.com/photo-1631049035182-249067d7618e?w=700&q=80','https://images.unsplash.com/photo-1540518614846-7eded433c457?w=700&q=80','https://images.unsplash.com/photo-1484101403633-562f891dc89a?w=700&q=80'] },
+  { id:3, nomor:'Kamar 03A', tipe:'Standar', lantai:1, status:'terisi',
+    harga:'Rp 1.200.000', luas:'3 × 4 m',
+    fasilitas:['WiFi','AC'],
+    desc:'Kamar standar bersih dan terawat. Lokasi strategis dekat tangga.',
+    imgs:['https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=700&q=80','https://images.unsplash.com/photo-1505693314120-0d443867891c?w=700&q=80'] },
+  { id:4, nomor:'Kamar 04C', tipe:'Premium', lantai:2, status:'maintenance',
+    harga:'Rp 2.500.000', luas:'5 × 6 m',
+    fasilitas:['WiFi','AC','TV','KM Dalam','Water Heater','Furnished'],
+    desc:'Kamar premium fully furnished terlengkap. Saat ini dalam proses renovasi.',
+    imgs:['https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=700&q=80','https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=700&q=80'] },
+  { id:5, nomor:'Kamar 05A', tipe:'Standar', lantai:2, status:'terisi',
+    harga:'Rp 1.200.000', luas:'3 × 4 m',
+    fasilitas:['WiFi','AC'],
+    desc:'Kamar standar di lantai 2 dengan sirkulasi udara baik.',
+    imgs:['https://images.unsplash.com/photo-1598928506311-c55ded91a20c?w=700&q=80','https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=700&q=80'] },
+  { id:6, nomor:'Kamar 06B', tipe:'Deluxe', lantai:2, status:'kosong',
+    harga:'Rp 1.800.000', luas:'4 × 5 m',
+    fasilitas:['WiFi','AC','TV','Balkon'],
+    desc:'Kamar deluxe eksklusif dengan balkon pribadi menghadap taman. Furnitur modern dan interior elegan.',
+    imgs:['https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=700&q=80','https://images.unsplash.com/photo-1554995207-c18c203602cb?w=700&q=80'] },
+  { id:7, nomor:'Kamar 07A', tipe:'Standar', lantai:1, status:'terisi',
+    harga:'Rp 1.200.000', luas:'3 × 4 m',
+    fasilitas:['WiFi','AC','KM Dalam'],
+    desc:'Kamar standar terawat di lantai bawah. Dekat area parkir dan musholla.',
+    imgs:['https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=700&q=80','https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=700&q=80'] },
+  { id:8, nomor:'Kamar 08C', tipe:'Premium', lantai:2, status:'kosong',
+    harga:'Rp 2.500.000', luas:'5 × 6 m',
+    fasilitas:['WiFi','AC','TV','KM Dalam','Water Heater','Furnished','Balkon'],
+    desc:'Kamar premium terbaik kami. Fully furnished dengan perabotan berkualitas tinggi, balkon pribadi, dan smart TV 43 inci.',
+    imgs:['https://images.unsplash.com/photo-1612965607446-25e1332775ae?w=700&q=80','https://images.unsplash.com/photo-1560185007-cde436f6a4d0?w=700&q=80','https://images.unsplash.com/photo-1609949279531-cf48d64bed89?w=700&q=80'] },
+];
+let nextId = 9;
+
+const FEAT_ICON = { WiFi:'fa-wifi', AC:'fa-snowflake', TV:'fa-tv', 'KM Dalam':'fa-bath', 'Water Heater':'fa-fire', Furnished:'fa-couch', Balkon:'fa-sun' };
+function featIcon(f){ return FEAT_ICON[f]||'fa-check'; }
+function statusBadge(s){
+  if(s==='terisi')      return '<span class="badge-custom badge-success">Terisi</span>';
+  if(s==='kosong')      return '<span class="badge-custom badge-info">Tersedia</span>';
+  if(s==='maintenance') return '<span class="badge-custom badge-warning">Maintenance</span>';
+  return '';
+}
+function updateStats(){
+  document.getElementById('totalKamar').textContent  = KAMAR_DATA.length + ' Kamar';
+  document.getElementById('totalKosong').textContent = KAMAR_DATA.filter(k=>k.status==='kosong').length + ' Kamar';
+  document.getElementById('totalTerisi').textContent = KAMAR_DATA.filter(k=>k.status==='terisi').length + ' Kamar';
+  document.getElementById('totalMaint').textContent  = KAMAR_DATA.filter(k=>k.status==='maintenance').length + ' Kamar';
+}
+
+let activeFilter = 'semua';
+function renderGrid(data){
+  const grid = document.getElementById('kamarGrid');
+  let html = data.map(k => {
+    const feats = k.fasilitas.slice(0,3).map(f =>
+      `<div class="room-feat-tag"><i class="fa-solid ${featIcon(f)}"></i> ${f}</div>`
+    ).join('') + (k.fasilitas.length>3?`<div class="room-feat-tag">+${k.fasilitas.length-3}</div>`:'');
+    return `
+    <div class="col-sm-6 col-lg-4 col-xl-3 kamar-item" data-status="${k.status}" data-tipe="${k.tipe}" data-lantai="${k.lantai}">
+      <div class="room-card" onclick="openDetail(${k.id})">
+        <div class="room-img-wrap">
+          <img src="${k.imgs[0]}" alt="${k.nomor}" loading="lazy"/>
+          <div class="room-img-overlay"></div>
+          <div class="room-status-pill">${statusBadge(k.status)}</div>
+          <div class="room-price-overlay">${k.harga}<span style="font-size:10px;font-weight:400">/bln</span></div>
+        </div>
+        <div class="room-info">
+          <div class="room-number">${k.nomor}</div>
+          <div class="room-type">Tipe ${k.tipe} · Lantai ${k.lantai} · ${k.luas}</div>
+          <div class="room-features">${feats}</div>
+          <div class="btn-actions">
+            <button class="btn-detail" onclick="event.stopPropagation();openDetail(${k.id})">
+              <i class="fa-solid fa-eye"></i> Lihat Detail
+            </button>
+            <button class="btn-icon edit" onclick="event.stopPropagation();openEditModal(${k.id})" title="Edit"><i class="fa-solid fa-pen"></i></button>
+            <button class="btn-icon del"  onclick="event.stopPropagation();hapusKamar(${k.id})"   title="Hapus"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  html += `
+  <div class="col-sm-6 col-lg-4 col-xl-3">
+    <div class="add-card" onclick="openFormModal()">
+      <div class="add-card-inner">
+        <div class="add-card-icon"><i class="fa-solid fa-plus"></i></div>
+        <div style="font-size:14px;font-weight:600;color:var(--clr-primary)">Tambah Kamar</div>
+        <div style="font-size:12px;color:var(--clr-muted);margin-top:4px">Klik untuk menambahkan unit baru</div>
+      </div>
+    </div>
+  </div>`;
+  grid.innerHTML = html;
+}
+function filterKamar(status,btn){
+  activeFilter=status;
+  document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  applyFilters();
+}
+function applyFilters(){
+  const tipe=document.getElementById('filterTipe').value;
+  const lantai=document.getElementById('filterLantai').value;
+  let f=KAMAR_DATA;
+  if(activeFilter!=='semua') f=f.filter(k=>k.status===activeFilter);
+  if(tipe)   f=f.filter(k=>k.tipe===tipe);
+  if(lantai) f=f.filter(k=>k.lantai===parseInt(lantai));
+  renderGrid(f);
+}
+
+let currentId=null;
+function openDetail(id){
+  const k=KAMAR_DATA.find(x=>x.id===id); if(!k) return;
+  currentId=id;
+  document.getElementById('modalMainImg').src=k.imgs[0];
+  document.getElementById('modalName').textContent=k.nomor;
+  document.getElementById('modalType').textContent=`Tipe ${k.tipe} · Lantai ${k.lantai}`;
+  document.getElementById('modalPrice').textContent=k.harga+'/bln';
+  document.getElementById('modalLantai').textContent='Lantai '+k.lantai;
+  document.getElementById('modalLuas').textContent=k.luas;
+  document.getElementById('modalTipe').textContent=k.tipe;
+  const sm={terisi:'🔴 Terisi',kosong:'🟢 Tersedia',maintenance:'🟡 Maintenance'};
+  document.getElementById('modalStatus').textContent=sm[k.status]||k.status;
+  document.getElementById('thumbStrip').innerHTML=k.imgs.map((img,i)=>
+    `<img src="${img}" class="${i===0?'active':''}" onclick="switchImg(this,'${img}')" loading="lazy"/>`
+  ).join('');
+  document.getElementById('modalFasilitas').innerHTML=k.fasilitas.map(f=>
+    `<div class="fasilitas-tag"><i class="fa-solid ${featIcon(f)}"></i> ${f}</div>`
+  ).join('');
+  document.getElementById('modalDesc').textContent=k.desc;
+  document.getElementById('detailModal').classList.add('show');
+  document.body.style.overflow='hidden';
+}
+function closeDetail(){
+  document.getElementById('detailModal').classList.remove('show');
+  document.body.style.overflow=''; currentId=null;
+}
+function handleOverlayClick(e){ if(e.target===document.getElementById('detailModal')) closeDetail(); }
+function switchImg(el,src){
+  document.getElementById('modalMainImg').src=src;
+  document.querySelectorAll('#thumbStrip img').forEach(i=>i.classList.remove('active'));
+  el.classList.add('active');
+}
+function editKamarFromModal(){ if(!currentId) return; const id=currentId; closeDetail(); setTimeout(()=>openEditModal(id),100); }
+function hapusKamarFromModal(){ if(!currentId) return; const id=currentId; closeDetail(); setTimeout(()=>hapusKamar(id),100); }
+
+const CHECKBOX_MAP={WiFi:'fc_wifi',AC:'fc_ac',TV:'fc_tv','KM Dalam':'fc_km','Water Heater':'fc_wh',Furnished:'fc_fur',Balkon:'fc_bal'};
+function openFormModal(){
+  document.getElementById('formModalTitle').textContent='Tambah Kamar Baru';
+  document.getElementById('btnSimpanLabel').textContent='Simpan';
+  document.getElementById('formEditId').value='';
+  ['fNomor','fHarga','fLuas','fDesc'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fLantai').value='1';
+  document.getElementById('fTipe').value='Standar';
+  document.getElementById('fStatus').value='kosong';
+  Object.values(CHECKBOX_MAP).forEach(id=>{ const el=document.getElementById(id); if(el) el.checked=id==='fc_wifi'||id==='fc_ac'; });
+  document.getElementById('formModal').classList.add('show');
+  document.body.style.overflow='hidden';
+}
+function openEditModal(id){
+  const k=KAMAR_DATA.find(x=>x.id===id); if(!k) return;
+  document.getElementById('formModalTitle').textContent='Edit Kamar';
+  document.getElementById('btnSimpanLabel').textContent='Update';
+  document.getElementById('formEditId').value=id;
+  document.getElementById('fNomor').value=k.nomor.replace('Kamar ','');
+  document.getElementById('fLantai').value=k.lantai;
+  document.getElementById('fTipe').value=k.tipe;
+  document.getElementById('fHarga').value=k.harga;
+  document.getElementById('fLuas').value=k.luas;
+  document.getElementById('fStatus').value=k.status;
+  document.getElementById('fDesc').value=k.desc;
+  Object.entries(CHECKBOX_MAP).forEach(([name,cbId])=>{ const el=document.getElementById(cbId); if(el) el.checked=k.fasilitas.includes(name); });
+  document.getElementById('formModal').classList.add('show');
+  document.body.style.overflow='hidden';
+}
+function closeFormModal(){
+  document.getElementById('formModal').classList.remove('show');
+  document.body.style.overflow='';
+}
+function handleFormOverlay(e){ if(e.target===document.getElementById('formModal')) closeFormModal(); }
+function simpanKamar(){
+  const nomor=document.getElementById('fNomor').value.trim();
+  if(!nomor){ alert('Nomor kamar harus diisi!'); return; }
+  const fasilitas=Object.entries(CHECKBOX_MAP).filter(([,cbId])=>document.getElementById(cbId)?.checked).map(([name])=>name);
+  const imgPool=['https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=700&q=80','https://images.unsplash.com/photo-1631049035182-249067d7618e?w=700&q=80','https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=700&q=80','https://images.unsplash.com/photo-1598928506311-c55ded91a20c?w=700&q=80'];
+  const editId=parseInt(document.getElementById('formEditId').value);
+  if(editId){
+    const idx=KAMAR_DATA.findIndex(k=>k.id===editId);
+    if(idx>-1) KAMAR_DATA[idx]={...KAMAR_DATA[idx],nomor:'Kamar '+nomor,lantai:parseInt(document.getElementById('fLantai').value),tipe:document.getElementById('fTipe').value,harga:document.getElementById('fHarga').value||KAMAR_DATA[idx].harga,luas:document.getElementById('fLuas').value||KAMAR_DATA[idx].luas,status:document.getElementById('fStatus').value,fasilitas,desc:document.getElementById('fDesc').value};
+  } else {
+    KAMAR_DATA.push({id:nextId++,nomor:'Kamar '+nomor,lantai:parseInt(document.getElementById('fLantai').value),tipe:document.getElementById('fTipe').value,harga:document.getElementById('fHarga').value||'Rp 0',luas:document.getElementById('fLuas').value||'—',status:document.getElementById('fStatus').value,fasilitas,desc:document.getElementById('fDesc').value,imgs:[imgPool[Math.floor(Math.random()*imgPool.length)]]});
+  }
+  closeFormModal(); updateStats(); applyFilters();
+}
+function hapusKamar(id){
+  const k=KAMAR_DATA.find(x=>x.id===id); if(!k) return;
+  if(!confirm(`Hapus ${k.nomor}? Tindakan ini tidak bisa dibatalkan.`)) return;
+  KAMAR_DATA=KAMAR_DATA.filter(x=>x.id!==id); updateStats(); applyFilters();
+}
+updateStats(); renderGrid(KAMAR_DATA);
+</script>
+</body>
+</html>
