@@ -8,18 +8,14 @@ use App\Models\Room;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class AdminRoomController extends Controller
 {
-    /**
-     * If the logged-in admin was created by an Owner, scope every action
-     * to that Owner's kosts. A "super admin" (created_by_owner_id = NULL)
-     * keeps the original platform-wide access.
-     */
     private function scopedKostIds(): ?array
     {
         $effective = Auth::user()?->effectiveOwnerId();
-        if ($effective === null) return null; // no scoping
+        if ($effective === null) return null;
         return Kost::where('owner_id', $effective)->pluck('id')->all();
     }
 
@@ -96,8 +92,13 @@ class AdminRoomController extends Controller
 
             DB::commit();
             return redirect()->route('admin.rooms.index')->with('success', 'Kamar berhasil ditambahkan ke Kost.');
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
+            Log::error('Failed to store room', [
+                'user_id' => Auth::id(),
+                'kost_id' => $validatedData['kost_id'] ?? null,
+                'error' => $e->getMessage(),
+            ]);
             return back()->withInput()->with('error', 'Terjadi kesalahan sistem saat menyimpan data.');
         }
     }

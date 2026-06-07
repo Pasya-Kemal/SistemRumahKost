@@ -32,6 +32,10 @@ class Photo extends Model
     
     public function getUrlAttribute()
     {
+        if (str_starts_with($this->image_path, 'http://') || str_starts_with($this->image_path, 'https://')) {
+            return $this->image_path;
+        }
+
         return asset('storage/' . $this->image_path);
     }
 
@@ -40,9 +44,8 @@ class Photo extends Model
      */
     protected static function booted()
     {
-        // Event listener: before deleting row
         static::deleting(function ($photo) {
-            if (Storage::disk('public')->exists($photo->image_path)) {
+            if (!str_starts_with($photo->image_path, 'http://') && !str_starts_with($photo->image_path, 'https://') && Storage::disk('public')->exists($photo->image_path)) {
                 Storage::disk('public')->delete($photo->image_path);
             }
         });

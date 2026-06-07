@@ -65,7 +65,7 @@
                         <a href="{{ route('payments.create', ['booking_id' => $b->id]) }}"
                            data-testid="pay-button-{{ $b->id }}"
                            class="bg-amber-400 hover:bg-amber-500 text-stone-900 font-semibold px-4 py-2 rounded-md text-sm transition">
-                            Bayar
+                            Konfirmasi Pembayaran
                         </a>
                         <form method="POST" action="{{ route('bookings.destroy', $b) }}"
                               onsubmit="return confirm('Batalkan booking ini?')">

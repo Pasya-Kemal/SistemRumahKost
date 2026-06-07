@@ -14,9 +14,6 @@ class PaymentController extends Controller
         return auth()->id();
     }
 
-    /**
-     * Authz
-     */
     private function authorizeTenantBooking(Booking $booking)
     {
         if ($booking->tenant_id !== $this->getCurrentTenantId()) {
@@ -26,7 +23,6 @@ class PaymentController extends Controller
 
     public function index()
     {
-        // Tenant read payment record
         $payments = Payment::whereHas('booking', function ($query) {
             $query->where('tenant_id', $this->getCurrentTenantId());
         })->with('booking.room')->get();
@@ -34,9 +30,6 @@ class PaymentController extends Controller
         return view('payments.index', compact('payments'));
     }
 
-    /**
-     * form payment for booking
-     */
     public function create(Request $request)
     {
         $request->validate(['booking_id' => 'required|exists:bookings,id']);
@@ -44,21 +37,16 @@ class PaymentController extends Controller
         $booking = Booking::with('room')->findOrFail($request->booking_id);
         $this->authorizeTenantBooking($booking);
 
-        // validate double-payment
         if ($booking->status !== 'pending') {
             return redirect()->route('payments.index')
                              ->with('error', 'Booking ini sudah dibayar atau dibatalkan.');
         }
 
-        // calculate price (<room> price * duration_month)
         $expectedAmount = $booking->room->price * $booking->duration_months;
 
         return view('payments.create', compact('booking', 'expectedAmount'));
     }
 
-    /**
-     * financial Transaction 
-     */
     public function store(Request $request)
     {
         $validatedData = $request->validate([
@@ -70,14 +58,11 @@ class PaymentController extends Controller
         $booking = Booking::with('room')->findOrFail($validatedData['booking_id']);
         $this->authorizeTenantBooking($booking);
 
-        // Transaction state validation 
         if ($booking->status !== 'pending') {
             return redirect()->route('payments.index')
                              ->with('error', 'Transaksi ditolak. Status booking tidak valid untuk pembayaran.');
         }
 
-        // 2. calculate  & verif Amount 
-        
         $expectedAmount = $booking->room->price * $booking->duration_months;
         
         if ((int)$validatedData['amount'] !== $expectedAmount) {
@@ -85,7 +70,6 @@ class PaymentController extends Controller
                          ->with('error', "Nominal tidak sesuai. Jumlah yang harus dibayar adalah Rp " . number_format($expectedAmount));
         }
 
-        // exec Pessimistic Locking
         DB::beginTransaction();
 
         try {
@@ -137,9 +121,17 @@ class PaymentController extends Controller
                 'payment_record' => $paymentRecord 
             ]);
 
+            $lockedBooking->update(['status' => 'active']);
+
+            DB::commit();
+
+            return redirect()
+                ->route('payments.show', $payment)
+                ->with('success', 'Pembayaran berhasil dikonfirmasi.');
+
         } catch (\Exception $e) {
             DB::rollBack();
-            // Log::error('Payment Failure: ' . $e->getMessage());
+            report($e);
             return back()->with('error', 'Terjadi kegagalan saat memproses pembayaran Anda. Saldo/Booking Anda belum dipotong.');
         }
     }
@@ -151,9 +143,6 @@ class PaymentController extends Controller
         return view('payments.show', compact('payment'));
     }
 
-    /**
-     * Block edit, update, dan destroy
-     */
     public function edit(Payment $payment)
     {
         abort(403, 'Catatan finansial bersifat permanen dan tidak dapat diedit secara manual.');

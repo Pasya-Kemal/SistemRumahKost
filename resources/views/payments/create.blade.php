@@ -1,12 +1,12 @@
 @extends('layouts.app')
-@section('title', 'Bayar Booking')
+@section('title', 'Konfirmasi Pembayaran')
 
 @section('page-header')
     <a href="{{ route('bookings.index') }}" class="text-sm text-stone-400 hover:text-stone-200 inline-flex items-center gap-1 mb-3">
         <i data-lucide="arrow-left" class="w-4 h-4"></i> Kembali ke booking
     </a>
-    <h1 class="font-display text-3xl md:text-4xl">Bayar Booking</h1>
-    <p class="text-stone-400 mt-2">Konfirmasi pembayaran untuk kamar yang Anda pesan.</p>
+    <h1 class="font-display text-3xl md:text-4xl">Konfirmasi Pembayaran</h1>
+    <p class="text-stone-400 mt-2">Pastikan nominal dan periode pembayaran sudah sesuai.</p>
 @endsection
 
 @section('content')

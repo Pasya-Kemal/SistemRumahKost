@@ -43,7 +43,7 @@
         @if($booking->status === 'pending')
             <a href="{{ route('payments.create', ['booking_id' => $booking->id]) }}"
                class="block text-center bg-amber-400 hover:bg-amber-500 text-stone-900 font-semibold px-4 py-2.5 rounded-md transition mt-2">
-                Bayar Sekarang
+                Konfirmasi Pembayaran
             </a>
         @endif
     </div>
