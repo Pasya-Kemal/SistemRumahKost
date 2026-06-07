@@ -7,12 +7,9 @@ use Illuminate\Http\Request;
 
 class OwnerFinancialController extends Controller
 {
-    /**
-     * Mocking Auth
-     */
     private function getCurrentOwnerId()
     {
-        return 1; 
+        return auth()->id();
     }
 
     /**

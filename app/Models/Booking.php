@@ -75,7 +75,7 @@ class Booking extends Model
                 $booking->room()->update(['is_available' => true]);
             }
 
-            // Delet all 'unpaid' Payment within booking attempt
+            // Delete all 'unpaid' Payment within booking attempt
             $booking->payments()->where('status', 'unpaid')->delete();
         });
     }

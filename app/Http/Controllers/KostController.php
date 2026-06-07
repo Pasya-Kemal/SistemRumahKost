@@ -13,7 +13,7 @@ class KostController extends Controller
      */
     private function getCurrentOwnerId()
     {
-        return 1; 
+        return auth()->id();
     }
 
     /**

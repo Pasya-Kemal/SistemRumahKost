@@ -7,12 +7,9 @@ use Illuminate\Http\Request;
 
 class RoomController extends Controller
 {
-    /**
-     * Mocking Auth
-     */
     private function getCurrentOwnerId()
     {
-        return 1; 
+        return auth()->id();
     }
 
     /**
@@ -38,7 +35,7 @@ class RoomController extends Controller
     }
 
     /**
-     * show infrmation detail
+     * show information detail
      */
     public function show(Room $room)
     {

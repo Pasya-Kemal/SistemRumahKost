@@ -2,26 +2,60 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Room;
 use App\Models\Kost;
 use App\Models\Photo;
+use App\Models\Room;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 
 class AdminRoomController extends Controller
 {
+    /**
+     * If the logged-in admin was created by an Owner, scope every action
+     * to that Owner's kosts. A "super admin" (created_by_owner_id = NULL)
+     * keeps the original platform-wide access.
+     */
+    private function scopedKostIds(): ?array
+    {
+        $effective = Auth::user()?->effectiveOwnerId();
+        if ($effective === null) return null; // no scoping
+        return Kost::where('owner_id', $effective)->pluck('id')->all();
+    }
+
+    private function authorizeKost(int $kostId): void
+    {
+        $allowed = $this->scopedKostIds();
+        if ($allowed === null) return;
+        abort_unless(in_array($kostId, $allowed, true), 403,
+            'Kost ini bukan milik tim Anda.');
+    }
+
+    private function authorizeRoom(Room $room): void
+    {
+        $allowed = $this->scopedKostIds();
+        if ($allowed === null) return;
+        abort_unless(in_array((int) $room->kost_id, $allowed, true), 403,
+            'Kamar ini bukan milik tim Anda.');
+    }
+
     public function index()
     {
-        //admin read
-        $rooms = Room::with('kost')->get();
+        $query = Room::with('kost');
+        if (($ids = $this->scopedKostIds()) !== null) {
+            $query->whereIn('kost_id', $ids);
+        }
+        $rooms = $query->get();
+
         return view('admin.rooms.index', compact('rooms'));
     }
 
     public function create()
     {
-        // Admin create list
-        $kosts = Kost::all(); 
+        $kosts = ($ids = $this->scopedKostIds()) === null
+            ? Kost::all()
+            : Kost::whereIn('id', $ids)->get();
+
         return view('admin.rooms.create', compact('kosts'));
     }
 
@@ -33,13 +67,13 @@ class AdminRoomController extends Controller
             'price'        => 'required|numeric|min:0',
             'description'  => 'required|string',
             'is_available' => 'boolean',
-            'photos.*'     => 'image|mimes:jpeg,png,jpg|max:2048'
+            'photos.*'     => 'image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
-        $validatedData['is_available'] = $request->has('is_available') ? true : false;
+        $this->authorizeKost((int) $validatedData['kost_id']);
+        $validatedData['is_available'] = $request->has('is_available');
 
         DB::beginTransaction();
-        
         try {
             $room = Room::create([
                 'kost_id'      => $validatedData['kost_id'],
@@ -55,14 +89,13 @@ class AdminRoomController extends Controller
                     Photo::create([
                         'room_id'    => $room->id,
                         'image_path' => $path,
-                        'is_primary' => $index === 0 ? true : false,
+                        'is_primary' => $index === 0,
                     ]);
                 }
             }
 
             DB::commit();
             return redirect()->route('admin.rooms.index')->with('success', 'Kamar berhasil ditambahkan ke Kost.');
-
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->withInput()->with('error', 'Terjadi kesalahan sistem saat menyimpan data.');
@@ -71,18 +104,25 @@ class AdminRoomController extends Controller
 
     public function show(Room $room)
     {
+        $this->authorizeRoom($room);
         $room->load(['kost', 'photos']);
         return view('admin.rooms.show', compact('room'));
     }
 
     public function edit(Room $room)
     {
-        $kosts = Kost::all();
+        $this->authorizeRoom($room);
+        $kosts = ($ids = $this->scopedKostIds()) === null
+            ? Kost::all()
+            : Kost::whereIn('id', $ids)->get();
+
         return view('admin.rooms.edit', compact('room', 'kosts'));
     }
 
     public function update(Request $request, Room $room)
     {
+        $this->authorizeRoom($room);
+
         $validatedData = $request->validate([
             'kost_id'      => 'required|exists:kosts,id',
             'room_name'    => 'required|string|max:255',
@@ -91,7 +131,9 @@ class AdminRoomController extends Controller
             'is_available' => 'boolean',
         ]);
 
-        $validatedData['is_available'] = $request->has('is_available') ? true : false;
+        $this->authorizeKost((int) $validatedData['kost_id']);
+        $validatedData['is_available'] = $request->has('is_available');
+
         $room->update($validatedData);
 
         return redirect()->route('admin.rooms.index')->with('success', 'Data Kamar berhasil diperbarui.');
@@ -99,6 +141,7 @@ class AdminRoomController extends Controller
 
     public function destroy(Room $room)
     {
+        $this->authorizeRoom($room);
         $room->delete();
         return redirect()->route('admin.rooms.index')->with('success', 'Kamar berhasil dihapus.');
     }

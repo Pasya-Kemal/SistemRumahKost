@@ -22,6 +22,7 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'role_id',
+        'created_by_owner_id',
         'name',
         'email',
         'password',
@@ -58,5 +59,31 @@ class User extends Authenticatable
     public function tenant()
     {
         return $this->hasOne(Tenant::class, 'user_id', 'id');
+    }
+
+    /** The Owner who created this Admin (null for owners, tenants, super admins). */
+    public function creatorOwner()
+    {
+        return $this->belongsTo(User::class, 'created_by_owner_id', 'id');
+    }
+
+    /** Admin accounts created by this Owner. Only meaningful when $this is an Owner. */
+    public function managedAdmins()
+    {
+        return $this->hasMany(User::class, 'created_by_owner_id', 'id');
+    }
+
+    /**
+     * Returns the owner_id used to scope data for this user.
+     *  - Owner   → their own id
+     *  - Admin   → the owner who created them (null = super admin, no scoping)
+     *  - Tenant  → null (not applicable)
+     */
+    public function effectiveOwnerId(): ?int
+    {
+        $roleName = optional($this->role)->role_name;
+        if ($roleName === 'owner') return $this->id;
+        if ($roleName === 'admin') return $this->created_by_owner_id;
+        return null;
     }
 }

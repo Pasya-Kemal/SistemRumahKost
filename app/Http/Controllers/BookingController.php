@@ -10,12 +10,10 @@ use Carbon\Carbon;
 
 class BookingController extends Controller
 {
-    /**
-     * TODO: Delete function before merge
-     */
+    
     private function getCurrentTenantId()
     {
-        return 2; 
+        return auth()->id();
     }
 
     /**

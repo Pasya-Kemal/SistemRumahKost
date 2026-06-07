@@ -9,12 +9,9 @@ use Illuminate\Support\Facades\DB;
 
 class PaymentController extends Controller
 {
-    /**
-     * TODO: Delete function before merge(Mocking Auth)
-     */
     private function getCurrentTenantId()
     {
-        return 2; 
+        return auth()->id();
     }
 
     /**
